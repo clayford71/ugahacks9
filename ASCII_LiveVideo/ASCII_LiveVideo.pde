@@ -12,7 +12,7 @@ boolean inColor = false;
 
 void setup() {
 
-  size(640, 480);
+  size(1280, 480);
   background(255);
   fill(30);
   noStroke();
@@ -42,7 +42,7 @@ void draw() {
     
     video.read();
     
-    image(video, width/2, height/2, width, height);
+    image(video, width/4, height/2, width/2, height);
     loadPixels();
     storedPixels = pixels;
     
@@ -57,7 +57,7 @@ void draw() {
 void keyPressed() {
 
   if (key == ' ') {
-    image(video, width/2, height/2, width, height);
+    image(video, 0, height/2, width, height);
     loadPixels();
     storedPixels = pixels;
     asciify();
@@ -88,27 +88,31 @@ void asciify() {
   
   filter(GRAY);
 
-  background(255);
+  //background(255);
+  fill(255);
+  rect(width/2,0,width/2,height);
 
 
   for (int y = 0; y < height; y += resolution) {
-    for (int x = 0; x < width; x += resolution) {
+    for (int x = 0; x < width/2; x += resolution) {
       color pixel = storedPixels[y * width + x];
-      text(ascii[int(brightness(pixel))], x, y);
+      fill(0);
+      text(ascii[int(brightness(pixel))], x + width/2, y);
     }
   }
 }
 
 void asciifyColor() {
 
-  background(255);
-
+  //background(255);
+  fill(255);
+  rect(width/2,0,width/2,height);
 
   for (int y = 0; y < height; y += resolution) {
-    for (int x = 0; x < width; x += resolution) {
+    for (int x = 0; x < width/2; x += resolution) {
       color pixel = storedPixels[y * width + x];
       fill(pixel);
-      text(ascii[int(brightness(pixel))], x, y);
+      text(ascii[int(brightness(pixel))], x + width/2, y);
     }
   }
 }
