@@ -37,20 +37,21 @@ void setup() {
 void draw() {
 
   imageMode(CENTER);
-  
+
   if (video.available()) {
-    
+
     video.read();
-    
+
     image(video, width/4, height/2, width/2, height);
     loadPixels();
     storedPixels = pixels;
-    
-    if (inColor) {
-      asciifyColor();
-    } else {
-      asciify();
-    }
+
+    //if (inColor) {
+    //  asciifyColor();
+    //} else {
+    //  asciify();
+    //}
+    asciify();
   }
 }
 
@@ -78,25 +79,30 @@ void keyPressed() {
   if (key == 'r') {
     resolution = 1;
   }
-  
-  if (key == 'c'){
+
+  if (key == 'c') {
     inColor = !inColor;
   }
 }
 
 void asciify() {
-  
-  filter(GRAY);
+
+  //from frasdfasdfja;ksdfjas;ldfjasdjkl;asdfjkl;adgfhjkadfgfilter(GRAY);
 
   //background(255);
   fill(255);
-  rect(width/2,0,width/2,height);
+  rect(width/2, 0, width/2, height);
 
 
   for (int y = 0; y < height; y += resolution) {
     for (int x = 0; x < width/2; x += resolution) {
       color pixel = storedPixels[y * width + x];
-      fill(0);
+
+      if (inColor) {
+        fill(pixel);
+      } else {
+        fill(0);
+      }
       text(ascii[int(brightness(pixel))], x + width/2, y);
     }
   }
@@ -106,7 +112,7 @@ void asciifyColor() {
 
   //background(255);
   fill(255);
-  rect(width/2,0,width/2,height);
+  rect(width/2, 0, width/2, height);
 
   for (int y = 0; y < height; y += resolution) {
     for (int x = 0; x < width/2; x += resolution) {
