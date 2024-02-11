@@ -33,7 +33,7 @@ int brightOpts = 11;
 int contrastOpts = 11;
 int grayscaleOpts = 11;
 
-int sliderBuffer = 20;
+int sliderBuffer = 40;
 
 float contrast = 1;
 float brightness = 0;
@@ -50,7 +50,7 @@ void setup() {
   grayscaleSlider = new Slider(735, grayscaleY, 450, grayscaleOpts);
 
   popButton = new Button(770, 400, 120, 50, "Simulate Protanopia");
-  deutButton = new Button(1130, 400, 120, 50, "Simulate Deuteranopia");
+  deutButton = new Button(1130, 400, 120, 50, "Simulate Tritanopia");
   testButton = new Button(950, 400, 120, 50, "Test Image");
 
   testImg = loadImage("cbtest.jpeg");
@@ -58,14 +58,14 @@ void setup() {
 
   cb = new ColorBlindness(this);
   popDef = Deficiency.PROTANOPIA;
-  deutDef = Deficiency.DEUTERANOPIA;
+  deutDef = Deficiency.TRITANOPIA;
 
   video = new Capture(this, Capture.list()[0]);
   video.start();
 }
 
 void draw() {
-
+  
   if (flipPop) {
     cb.simulate(popDef).setAmount(0);
     flipPop = false;
@@ -98,16 +98,14 @@ void draw() {
 
   contrast = map(contrastSlider.returnIndexVal(), 0, contrastOpts - 1, 0.5, 1.5);
   brightness = map(brightSlider.returnIndexVal(), 0, brightOpts - 1, -50, 50);
-  grayscale = map(grayscaleSlider.returnIndexVal(), 0, grayscaleOpts - 1, 0, 1);
+  grayscale = map(grayscaleSlider.returnIndexVal(), 0, grayscaleOpts - 1, 0, 20);
 
   imageMode(CENTER);
 
   if (video.available()) {
     video.read();
     image(video, width/4, height/2, width/2, height);
-    //testPostProcess();
     adjustImage();
-    grayscaleThatJunk(grayscale);
   }
 
   fill(0);
@@ -121,11 +119,11 @@ void draw() {
   testButton.render();
 
   if (testButton.isPressed) {
-    image(alteredImg,testImg.width/2,testImg.height/2);
+    image(alteredImg, testImg.width/2, testImg.height/2);
+    //image(alteredImg, 320, 240, 640, 480);
   }
-  grayscaleThatImage(grayscale);
   adjustTestImage();
-  
+
   textAlign(CENTER);
   textSize(14);
   fill(200);
@@ -133,12 +131,12 @@ void draw() {
   text("128", 1185, 125);
   text("-0.5", 735, 225);
   text("0.5", 1185, 225);
-  text("0.0", 735, 325);
-  text("1.0", 1185, 325);
+  text("0", 735, 325);
+  text("20", 1185, 325);
   textSize(28);
   text("Brightness", 960, 150);
   text("Contrast", 960, 250);
-  text("Grayscale", 960, 350);
+  text("Saturation", 960, 350);
 }
 
 void mousePressed() {
@@ -192,59 +190,32 @@ void adjustImage() {
     g = (int) (g * contrast + brightness);
     b = (int) (b * contrast + brightness);
 
+    String[] s = determineMaxes(r, g, b);
+
+    if (isInArray(s, "R")) {
+      r = (int) (r * (1 + (grayscale / 100)));
+    } else {
+      r = (int) (r * (1 - (grayscale / 100)));
+    }
+    
+    if (isInArray(s, "G")) {
+      g = (int) (g * (1 + (grayscale / 100)));
+    } else {
+      g = (int) (g * (1 - (grayscale / 100)));
+    }
+    
+    if (isInArray(s, "B")) {
+      b = (int) (b * (1 + (grayscale / 100)));
+    } else {
+      b = (int) (b * (1 - (grayscale / 100)));
+    }
+
     r = r < 0 ? 0: r > 255 ? 255: r;
     g = g < 0 ? 0: g > 255 ? 255: g;
     b = b < 0 ? 0: b > 255 ? 255: b;
 
     pixels[i] = color(r, g, b);
     //updatePixels();
-  }
-  updatePixels();
-}
-
-void grayscaleThatJunk(float value) {
-  /**
-   Potential flow:
-   - Base grayscale-ifying on "value" (0.0 - 1.0)
-   - Use that value to adjust rgb values of every pixel
-   - weight averages based on "value" ?
-   */
-
-  loadPixels();
-
-  for (int i = 0; i < pixels.length; i++) {
-    color inColor = pixels[i];
-
-    int r = (int) red(inColor);
-    int g = (int) green(inColor);
-    int b = (int) blue(inColor);
-
-    int t = (int) (r + g + b) / 3;
-
-    int newR = r > t ? (int) (r - (abs(r - t) * value)): r < t ? (int) (r + (abs(r - t) * value)): r;
-    int newG = g > t ? (int) (g - (abs(g - t) * value)): r < t ? (int) (g + (abs(r - t) * value)): g;
-    int newB = b > t ? (int) (b - (abs(b - t) * value)): r < t ? (int) (b + (abs(r - t) * value)): b;
-
-    newR = newR < 0 ? 0: newR > 255 ? 255: newR;
-    newG = newG < 0 ? 0: newG > 255 ? 255: newG;
-    newB = newB < 0 ? 0: newB > 255 ? 255: newB;
-
-    pixels[i] = color(newR, newG, newB);
-  }
-
-  updatePixels();
-}
-
-void testPostProcess() {
-  // Loop through each pixel in the image
-  loadPixels();
-  for (int i = 0; i < pixels.length; i++) {
-    // Extract the color of the pixel
-    color pixelColor = pixels[i];
-
-    // Example: Convert the image to grayscale to make it easier for colorblind individuals to see
-    float grayValue = red(pixelColor) * 0.2126 + green(pixelColor) * 0.7152 + blue(pixelColor) * 0.0722;
-    pixels[i] = color(grayValue);
   }
   updatePixels();
 }
@@ -261,6 +232,26 @@ void adjustTestImage() {
     r = (int) (r * contrast + brightness);
     g = (int) (g * contrast + brightness);
     b = (int) (b * contrast + brightness);
+    
+    String[] s = determineMaxes(r, g, b);
+
+    if (isInArray(s, "R")) {
+      r = (int) (r * (1 + (grayscale / 100)));
+    } else {
+      r = (int) (r * (1 - (grayscale / 100)));
+    }
+    
+    if (isInArray(s, "G")) {
+      g = (int) (g * (1 + (grayscale / 100)));
+    } else {
+      g = (int) (g * (1 - (grayscale / 100)));
+    }
+    
+    if (isInArray(s, "B")) {
+      b = (int) (b * (1 + (grayscale / 100)));
+    } else {
+      b = (int) (b * (1 - (grayscale / 100)));
+    }
 
     r = r < 0 ? 0: r > 255 ? 255: r;
     g = g < 0 ? 0: g > 255 ? 255: g;
@@ -272,35 +263,31 @@ void adjustTestImage() {
   alteredImg.updatePixels();
 }
 
-void grayscaleThatImage(float value) {
-  /**
-   Potential flow:
-   - Base grayscale-ifying on "value" (0.0 - 1.0)
-   - Use that value to adjust rgb values of every pixel
-   - weight averages based on "value" ?
-   */
+String[] determineMaxes(int r, int g, int b) {
+  String[] retArr = new String[3];
 
-  testImg.loadPixels();
+  retArr[0] = "R";
+  retArr[1] = "G";
+  retArr[2] = "B";
 
-  for (int i = 0; i < testImg.pixels.length; i++) {
-    color inColor = testImg.pixels[i];
-
-    int r = (int) red(inColor);
-    int g = (int) green(inColor);
-    int b = (int) blue(inColor);
-
-    int t = (int) (r + g + b) / 3;
-
-    int newR = r > t ? (int) (r - (abs(r - t) * value)): r < t ? (int) (r + (abs(r - t) * value)): r;
-    int newG = g > t ? (int) (g - (abs(g - t) * value)): r < t ? (int) (g + (abs(r - t) * value)): g;
-    int newB = b > t ? (int) (b - (abs(b - t) * value)): r < t ? (int) (b + (abs(r - t) * value)): b;
-
-    newR = newR < 0 ? 0: newR > 255 ? 255: newR;
-    newG = newG < 0 ? 0: newG > 255 ? 255: newG;
-    newB = newB < 0 ? 0: newB > 255 ? 255: newB;
-
-    alteredImg.pixels[i] = color(newR, newG, newB);
+  if (r < g || r < b) {
+    retArr[0] = "EMPTY";
+  }
+  if (g < r || g < b) {
+    retArr[1] = "EMPTY";
+  }
+  if (b < g || b < r) {
+    retArr[2] = "EMPTY";
   }
 
-  alteredImg.updatePixels();
+  return retArr;
+}
+
+boolean isInArray(String[] arr, String e) {
+  for (int i = 0; i < arr.length; i++) {
+    if (arr[i] == e) {
+      return true;
+    }
+  }
+  return false;
 }
